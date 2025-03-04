@@ -30,8 +30,21 @@ main:
     lda #>$3039
     sta MEM_RAND_SEED+1
 
-    ; Halt until next stages are hooked (6502 unofficial KIL opcode)
-    .byte $02
+    ; 5. Print startup banner "PBasic\n"
+    lda #<MSG_BANNER
+    sta SCR_PTR
+    lda #>MSG_BANNER
+    sta SCR_PTR+1
+    jsr PRINT_STR
+
+    ; 6. Initialize program memory linked list
+    jsr PROG_INIT
+
+    ; 7. Clear variable storage
+    jsr VAR_INIT
+
+    ; 8. Enter REPL loop
+    jmp REPL
 
 .segment "VECTORS"
     .word main ; NMI
