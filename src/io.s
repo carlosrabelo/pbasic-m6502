@@ -6,6 +6,7 @@
 
 .export INCHAR, OUTCHAR, CHECK_BREAK
 .export PRINT_STR, PRINT_CRLF, PRINT_OK, NEG32, PRINT_NUMBER
+.export READ_LINE
 
 INCHAR:
 @wait_rx:
@@ -189,3 +190,52 @@ POWERS_OF_10:
     .byte $64, $00, $00, $00   ;           100 ($00000064)
     .byte $0A, $00, $00, $00   ;            10 ($0000000A)
     .byte $01, $00, $00, $00   ;             1 ($00000001)
+
+READ_LINE:
+    pha
+    tya
+    pha
+    ldy #0
+
+@read_char:
+    jsr INCHAR
+
+    cmp #13
+    beq @end_line
+    cmp #10
+    beq @end_line
+
+    cmp #8
+    beq @backspace
+    cmp #127
+    beq @backspace
+
+    cpy #126
+    bcs @read_char             ; Cap input at 126 characters
+
+    cmp #'a'
+    bcc @not_lower
+    cmp #'z'+1
+    bcs @not_lower
+    sec
+    sbc #32
+
+@not_lower:
+    sta MEM_INPUT_BUF, y
+    iny
+    jmp @read_char
+
+@backspace:
+    cpy #0
+    beq @read_char
+    dey
+    jmp @read_char
+
+@end_line:
+    lda #0
+    sta MEM_INPUT_BUF, y
+    pla
+    tay
+    pla
+    rts
+
