@@ -12,6 +12,7 @@ FILES=(
     src/variables.s
     src/memmgr.s
     src/tokenize.s
+    src/detokenize.s
     src/io.s
     src/repl.s
     src/commands.s
