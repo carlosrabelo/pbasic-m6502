@@ -1,5 +1,5 @@
 ; ============================================================================
-; PBasic m6502 - Variable Subsystem Initialization
+; PBasic m6502 - Variables Storage & Management
 ; ============================================================================
 
 .segment "CODE"
@@ -10,6 +10,7 @@ VAR_INIT:
     pha
     tya
     pha
+    ; Zero all 104 bytes in MEM_VARS (26 variables A..Z, 4 bytes each)
     ldy #104
     lda #0
 @var_init_loop:
@@ -20,3 +21,4 @@ VAR_INIT:
     tay
     pla
     rts
+
