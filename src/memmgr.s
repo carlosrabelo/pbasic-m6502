@@ -42,6 +42,11 @@ MEM_OPEN_HOLE:
     tya
     pha
 
+    lda SCR_PTR
+    sta SCR_INS
+    lda SCR_PTR+1
+    sta SCR_INS+1
+
     ; 1. Check if MEM_PROG_END + SCR_LEN > MEM_PROG_LIMIT
     clc
     lda MEM_PROG_END
@@ -168,6 +173,11 @@ MEM_CLOSE_HOLE:
     tya
     pha
 
+    lda SCR_PTR
+    sta SCR_INS
+    lda SCR_PTR+1
+    sta SCR_INS+1
+
     ; 1. Source SCR_WORK = SCR_INS + SCR_LEN
     clc
     lda SCR_INS
@@ -252,6 +262,11 @@ FIX_NEXT_ADD:
     tya
     pha
 
+    lda SCR_PTR
+    sta SCR_TMP
+    lda SCR_PTR+1
+    sta SCR_TMP+1
+
     lda #<MEM_PROG_START
     sta SCR_WORK
     lda #>MEM_PROG_START
@@ -315,6 +330,11 @@ FIX_NEXT_SUB:
     pha
     tya
     pha
+
+    lda SCR_PTR
+    sta SCR_TMP
+    lda SCR_PTR+1
+    sta SCR_TMP+1
 
     lda #<MEM_PROG_START
     sta SCR_WORK
