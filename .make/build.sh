@@ -10,6 +10,7 @@ FILES=(
     src/defs.inc
     src/strings.s
     src/variables.s
+    src/math.s
     src/memmgr.s
     src/lines.s
     src/tokenize.s
