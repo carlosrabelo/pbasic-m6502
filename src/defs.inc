@@ -47,6 +47,11 @@ MEM_PROG_LIMIT  = $23   ; 2 bytes: pointer to upper limit of program space
 MEM_RUN_FLAG    = $25   ; 1 byte:  0 = REPL, 1 = running program
 MEM_GOSUB_SP    = $26   ; 1 byte:  call stack pointer index (depth 0..16)
 MEM_RAND_SEED   = $27   ; 2 bytes: PRNG seed (initial 12345)
+SCR_WORK        = $29   ; 4 bytes: 32-bit temporary work register
+SCR_WORK_0      = $29
+SCR_WORK_1      = $2A
+SCR_WORK_2      = $2B
+SCR_WORK_3      = $2C
 
 ; ----------------------------------------------------------------------------
 ; Static RAM Buffers ($0200 - $07FF)
