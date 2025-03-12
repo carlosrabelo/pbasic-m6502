@@ -301,9 +301,12 @@ EVAL_TERM:
     jmp @et_loop
 
 ; ============================================================================
-; Expression Evaluation (+ and -)
+; Expression Evaluation (+ and - with 32-bit addition and subtraction)
 ; ============================================================================
 
+; EVAL_EXPR:
+; Evaluates arithmetic expressions with + and - left-to-right precedence
+; Output: SCR_ACC = 32-bit evaluated expression
 EVAL_EXPR:
     jsr EVAL_TERM
 
