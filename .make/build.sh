@@ -21,6 +21,7 @@ FILES=(
     src/repl.s
     src/commands.s
     src/cmd_list.s
+    src/cmd_print.s
     src/main.s
 )
 
