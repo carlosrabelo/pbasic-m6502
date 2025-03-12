@@ -232,9 +232,12 @@ EVAL_FACTOR:
     jmp EVAL_FACTOR
 
 ; ============================================================================
-; Term Evaluation (* and /)
+; Term Evaluation (* and / with 16-bit MUL16 and DIV16)
 ; ============================================================================
 
+; EVAL_TERM:
+; Evaluates multiplicative terms with * and / left-to-right precedence
+; Output: SCR_ACC = 32-bit evaluated term
 EVAL_TERM:
     jsr EVAL_FACTOR
 
