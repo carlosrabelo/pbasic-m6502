@@ -423,6 +423,9 @@ EVAL_EXPR:
 ; Relational Condition Evaluation (=, <>, <, >, <=, >=)
 ; ============================================================================
 
+; EVAL_COND:
+; Evaluates boolean condition expressions with relational operators
+; Output: A = 1 (true), A = 0 (false)
 EVAL_COND:
     jsr EVAL_EXPR
 
