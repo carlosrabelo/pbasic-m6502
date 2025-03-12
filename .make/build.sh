@@ -11,6 +11,8 @@ FILES=(
     src/strings.s
     src/variables.s
     src/math.s
+    src/util.s
+    src/expr.s
     src/memmgr.s
     src/lines.s
     src/tokenize.s
