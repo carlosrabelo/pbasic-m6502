@@ -24,6 +24,7 @@ FILES=(
     src/cmd_let.s
     src/cmd_print.s
     src/cmd_new.s
+    src/cmd_free.s
     src/cmd_rem.s
     src/main.s
 )
