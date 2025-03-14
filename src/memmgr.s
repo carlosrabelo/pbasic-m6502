@@ -294,6 +294,7 @@ FIX_NEXT_ADD:
     cmp SCR_TMP
 :
     bcc @fna_skip
+    beq @fna_skip
 
     ; SCR_NUM >= SCR_TMP -> add delta SCR_LEN
     clc
