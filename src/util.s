@@ -44,8 +44,9 @@ RAND16:
     rts
 
 ; ABS:
+; 32-bit two's complement absolute value:
 ; Input: SCR_ACC = 32-bit signed integer
-; Output: SCR_ACC = absolute value
+; Output: SCR_ACC = absolute value (non-negative)
 ABS:
     lda SCR_ACC_3
     and #$80
