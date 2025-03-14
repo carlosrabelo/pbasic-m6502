@@ -5,7 +5,7 @@
 .segment "CODE"
 
 .export REPL_DISPATCH, REPL_SYNTAX_ERROR, CMD_JUMP_TABLE
-.export DO_IF, DO_INPUT
+.export DO_INPUT
 
 REPL_SYNTAX_ERROR:
     lda #<MSG_ERROR
@@ -96,5 +96,4 @@ CMD_JUMP_TABLE:
     .word DO_REM      ; 0x8C
 
 ; Temporary stubs
-DO_IF:      jmp REPL_SYNTAX_ERROR
 DO_INPUT:   jmp REPL_SYNTAX_ERROR
