@@ -73,17 +73,19 @@ echo "Public symbol verification passed (${#MANDATORY_SYMBOLS[@]} symbols checke
 ./.make/build.sh
 echo "Build succeeded."
 
-# 3. Mojave test if demos/99_test.bas exists
+# 4. Mojave test if demos/99_test.bas exists
 if [[ -f demos/99_test.bas ]] && command -v mojave >/dev/null 2>&1; then
     echo "Running simulator regression test..."
-    OUTPUT=$(mojave --machine m6502 --load-bin bin/pbasic.bin@0000 < demos/99_test.bas 2>&1 || true)
+    OUTPUT=$(timeout 5s mojave --machine m6502 --load-bin bin/pbasic.bin@0000 < demos/99_test.bas 2>&1 || true)
     
-    if ! echo "$OUTPUT" | grep -q -- "--- TEST COMPLETE ---"; then
-        echo "Regression test failed: '--- TEST COMPLETE ---' not found" >&2
-        echo "$OUTPUT"
-        exit 1
-    fi
-    echo "Regression test passed."
+    for assertion in "--- TEST COMPLETE ---" "IN SUBROUTINE!" "ABS OF -15 IS: 15" "NEG FIFTEEN IS: -15"; do
+        if ! echo "$OUTPUT" | grep -q -- "$assertion"; then
+            echo "Regression test failed: '$assertion' not found in output" >&2
+            echo "$OUTPUT"
+            exit 1
+        fi
+    done
+    echo "Regression test passed (all 4 assertions verified)."
 fi
 
 echo "All checks passed."

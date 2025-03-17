@@ -33,7 +33,7 @@ PROG_INIT:
 ; ============================================================================
 
 ; MEM_OPEN_HOLE:
-; Input: SCR_INS = target address, SCR_LEN = byte count
+; Input: SCR_PTR = target address, SCR_LEN = byte count
 ; Output: A = 1 on success, A = 0 on overflow
 MEM_OPEN_HOLE:
     pha
@@ -41,11 +41,6 @@ MEM_OPEN_HOLE:
     pha
     tya
     pha
-
-    lda SCR_PTR
-    sta SCR_INS
-    lda SCR_PTR+1
-    sta SCR_INS+1
 
     ; 1. Check if MEM_PROG_END + SCR_LEN > MEM_PROG_LIMIT
     clc
@@ -76,18 +71,18 @@ MEM_OPEN_HOLE:
     rts
 
 @moh_ok:
-    ; 2. Bytes to shift = MEM_PROG_END - SCR_INS
+    ; 2. Bytes to shift = MEM_PROG_END - SCR_PTR
     sec
     lda MEM_PROG_END
-    sbc SCR_INS
-    sta SCR_NLEN
+    sbc SCR_PTR
+    sta SCR_TLEN
     lda MEM_PROG_END+1
-    sbc SCR_INS+1
-    sta SCR_NLEN+1
+    sbc SCR_PTR+1
+    sta SCR_TLEN+1
 
     ; If shift count == 0, skip copying
-    lda SCR_NLEN
-    ora SCR_NLEN+1
+    lda SCR_TLEN
+    ora SCR_TLEN+1
     beq @moh_update_end
 
     ; 3. Source SCR_WORK = MEM_PROG_END - 1
@@ -136,15 +131,15 @@ MEM_OPEN_HOLE:
 :
     dec SCR_WORK_2
 
-    ; Decrement SCR_NLEN
-    lda SCR_NLEN
+    ; Decrement SCR_TLEN
+    lda SCR_TLEN
     bne :+
-    dec SCR_NLEN+1
+    dec SCR_TLEN+1
 :
-    dec SCR_NLEN
+    dec SCR_TLEN
 
-    lda SCR_NLEN
-    ora SCR_NLEN+1
+    lda SCR_TLEN
+    ora SCR_TLEN+1
     bne @moh_copy_loop
 
 @moh_update_end:
@@ -165,7 +160,7 @@ MEM_OPEN_HOLE:
     rts
 
 ; MEM_CLOSE_HOLE:
-; Input: SCR_INS = target address, SCR_LEN = byte count to remove
+; Input: SCR_PTR = target address, SCR_LEN = byte count to remove
 MEM_CLOSE_HOLE:
     pha
     txa
@@ -173,37 +168,32 @@ MEM_CLOSE_HOLE:
     tya
     pha
 
-    lda SCR_PTR
-    sta SCR_INS
-    lda SCR_PTR+1
-    sta SCR_INS+1
-
-    ; 1. Source SCR_WORK = SCR_INS + SCR_LEN
+    ; 1. Source SCR_WORK = SCR_PTR + SCR_LEN
     clc
-    lda SCR_INS
+    lda SCR_PTR
     adc SCR_LEN
     sta SCR_WORK
-    lda SCR_INS+1
+    lda SCR_PTR+1
     adc SCR_LEN+1
     sta SCR_WORK+1
 
-    ; 2. Destination SCR_WORK_2 = SCR_INS
-    lda SCR_INS
+    ; 2. Destination SCR_WORK_2 = SCR_PTR
+    lda SCR_PTR
     sta SCR_WORK_2
-    lda SCR_INS+1
+    lda SCR_PTR+1
     sta SCR_WORK_2+1
 
-    ; 3. Count SCR_NLEN = MEM_PROG_END - SCR_WORK
+    ; 3. Count SCR_TLEN = MEM_PROG_END - SCR_WORK
     sec
     lda MEM_PROG_END
     sbc SCR_WORK
-    sta SCR_NLEN
+    sta SCR_TLEN
     lda MEM_PROG_END+1
     sbc SCR_WORK+1
-    sta SCR_NLEN+1
+    sta SCR_TLEN+1
 
-    lda SCR_NLEN
-    ora SCR_NLEN+1
+    lda SCR_TLEN
+    ora SCR_TLEN+1
     beq @mch_update_end
 
     ; 4. Copy loop leftwards
@@ -222,15 +212,15 @@ MEM_CLOSE_HOLE:
     bne :+
     inc SCR_WORK_2+1
 :
-    ; Decrement SCR_NLEN
-    lda SCR_NLEN
+    ; Decrement SCR_TLEN
+    lda SCR_TLEN
     bne :+
-    dec SCR_NLEN+1
+    dec SCR_TLEN+1
 :
-    dec SCR_NLEN
+    dec SCR_TLEN
 
-    lda SCR_NLEN
-    ora SCR_NLEN+1
+    lda SCR_TLEN
+    ora SCR_TLEN+1
     bne @mch_copy_loop
 
 @mch_update_end:
@@ -276,42 +266,42 @@ FIX_NEXT_ADD:
     ; Read next pointer at (SCR_WORK)
     ldy #0
     lda (SCR_WORK), y
-    sta SCR_NUM
+    sta SCR_WORK_2
     iny
     lda (SCR_WORK), y
-    sta SCR_NUM+1
+    sta SCR_WORK_2+1
 
     ; Check sentinel
-    lda SCR_NUM
-    ora SCR_NUM+1
+    lda SCR_WORK_2
+    ora SCR_WORK_2+1
     beq @fna_done
 
-    ; Compare SCR_NUM with threshold SCR_TMP
-    lda SCR_NUM+1
+    ; Compare SCR_WORK_2 with threshold SCR_TMP
+    lda SCR_WORK_2+1
     cmp SCR_TMP+1
     bne :+
-    lda SCR_NUM
+    lda SCR_WORK_2
     cmp SCR_TMP
 :
     bcc @fna_skip
     beq @fna_skip
 
-    ; SCR_NUM >= SCR_TMP -> add delta SCR_LEN
+    ; SCR_WORK_2 > SCR_TMP -> add delta SCR_LEN
     clc
-    lda SCR_NUM
+    lda SCR_WORK_2
     adc SCR_LEN
     ldy #0
     sta (SCR_WORK), y
-    lda SCR_NUM+1
+    lda SCR_WORK_2+1
     adc SCR_LEN+1
     iny
     sta (SCR_WORK), y
 
 @fna_skip:
-    ; Advance SCR_WORK to next node (using old SCR_NUM)
-    lda SCR_NUM
+    ; Advance SCR_WORK to next node (using old SCR_WORK_2)
+    lda SCR_WORK_2
     sta SCR_WORK
-    lda SCR_NUM+1
+    lda SCR_WORK_2+1
     sta SCR_WORK+1
     jmp @fna_loop
 
@@ -346,42 +336,42 @@ FIX_NEXT_SUB:
     ; Read next pointer at (SCR_WORK)
     ldy #0
     lda (SCR_WORK), y
-    sta SCR_NUM
+    sta SCR_WORK_2
     iny
     lda (SCR_WORK), y
-    sta SCR_NUM+1
+    sta SCR_WORK_2+1
 
     ; Check sentinel
-    lda SCR_NUM
-    ora SCR_NUM+1
+    lda SCR_WORK_2
+    ora SCR_WORK_2+1
     beq @fns_done
 
-    ; Compare SCR_NUM with threshold SCR_TMP (strictly greater: SCR_NUM > SCR_TMP)
-    lda SCR_NUM+1
+    ; Compare SCR_WORK_2 with threshold SCR_TMP (strictly greater: SCR_WORK_2 > SCR_TMP)
+    lda SCR_WORK_2+1
     cmp SCR_TMP+1
     bne :+
-    lda SCR_NUM
+    lda SCR_WORK_2
     cmp SCR_TMP
 :
     bcc @fns_skip
     beq @fns_skip
 
-    ; SCR_NUM > SCR_TMP -> subtract delta SCR_LEN
+    ; SCR_WORK_2 > SCR_TMP -> subtract delta SCR_LEN
     sec
-    lda SCR_NUM
+    lda SCR_WORK_2
     sbc SCR_LEN
     ldy #0
     sta (SCR_WORK), y
-    lda SCR_NUM+1
+    lda SCR_WORK_2+1
     sbc SCR_LEN+1
     iny
     sta (SCR_WORK), y
 
 @fns_skip:
-    ; Advance SCR_WORK to next node (using old SCR_NUM)
-    lda SCR_NUM
+    ; Advance SCR_WORK to next node (using old SCR_WORK_2)
+    lda SCR_WORK_2
     sta SCR_WORK
-    lda SCR_NUM+1
+    lda SCR_WORK_2+1
     sta SCR_WORK+1
     jmp @fns_loop
 
