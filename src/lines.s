@@ -348,7 +348,15 @@ LINE_STORE:
     lda SCR_NUM+1
     sta (SCR_INS), y
 
-    ; 3. Token stream bytes terminated by 0x00
+    ; 3. Token stream bytes (SCR_NLEN - 4 bytes)
+    sec
+    lda SCR_NLEN
+    sbc #4
+    sta SCR_TLEN
+    lda SCR_NLEN+1
+    sbc #0
+    sta SCR_TLEN+1
+
     lda #<(MEM_TOKEN_BUF + 3)
     sta SCR_WORK
     lda #>(MEM_TOKEN_BUF + 3)
@@ -363,10 +371,13 @@ LINE_STORE:
     sta SCR_WORK_2+1
 
 @ls_copy_tok:
+    lda SCR_TLEN
+    ora SCR_TLEN+1
+    beq @ls_done
+
     ldy #0
     lda (SCR_WORK), y
     sta (SCR_WORK_2), y
-    tax
 
     inc SCR_WORK
     bne :+
@@ -376,8 +387,13 @@ LINE_STORE:
     bne :+
     inc SCR_WORK_2+1
 :
-    cpx #0
-    bne @ls_copy_tok
+    lda SCR_TLEN
+    bne :+
+    dec SCR_TLEN+1
+:
+    dec SCR_TLEN
+
+    jmp @ls_copy_tok
 
 @ls_done:
     pla
