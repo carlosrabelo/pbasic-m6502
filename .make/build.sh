@@ -9,7 +9,12 @@ mkdir -p bin
 FILES=(
     src/defs.inc
     src/strings.s
+    src/variables.s
+    src/memmgr.s
+    src/tokenize.s
     src/io.s
+    src/repl.s
+    src/commands.s
     src/main.s
 )
 
