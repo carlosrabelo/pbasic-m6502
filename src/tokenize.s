@@ -28,21 +28,24 @@ TOKENIZE:
     lda (SCR_PTR), y
 
     ; End of line check
-    beq @tok_end
-
+    bne :+
+    jmp @tok_end
+:
     ; Skip spaces
     cmp #' '
     bne @tok_check_keyword
     inc SCR_PTR
-    bne @tok_loop
+    bne @tok_loop_jump
     inc SCR_PTR+1
+@tok_loop_jump:
     jmp @tok_loop
 
 @tok_check_keyword:
     jsr TRY_MATCH_KEYWORD
     cmp #0
-    beq @tok_check_number
-
+    bne :+
+    jmp @tok_check_string
+:
     ; Keyword matched! Token in A
     tax
     ldy #0
@@ -54,13 +57,16 @@ TOKENIZE:
 :
     ; Check if REM ($8C)
     cpx #TOK_REM
-    bne @tok_loop
-
+    beq :+
+    jmp @tok_loop
+:
     ; REM: copy all remaining characters until 0x00
 @tok_rem_copy:
     ldy #0
     lda (SCR_PTR), y
-    beq @tok_end
+    bne :+
+    jmp @tok_end
+:
     sta (SCR_PTR2), y
     inc SCR_PTR
     bne :+
@@ -71,15 +77,164 @@ TOKENIZE:
     inc SCR_PTR2+1
     jmp @tok_rem_copy
 
+@tok_check_string:
+    ldy #0
+    lda (SCR_PTR), y
+    cmp #'"'
+    beq :+
+    jmp @tok_check_number
+:
+    ; Advance past opening quote
+    inc SCR_PTR
+    bne :+
+    inc SCR_PTR+1
+:
+    ; Emit opening TOK_STRING ($C1)
+    lda #TOK_STRING
+    sta (SCR_PTR2), y
+    inc SCR_PTR2
+    bne :+
+    inc SCR_PTR2+1
+:
+@tok_str_loop:
+    ldy #0
+    lda (SCR_PTR), y
+    beq @tok_str_close
+    cmp #'"'
+    beq @tok_str_quote
+    sta (SCR_PTR2), y
+    inc SCR_PTR2
+    bne :+
+    inc SCR_PTR2+1
+:
+    inc SCR_PTR
+    bne @tok_str_loop
+    inc SCR_PTR+1
+    jmp @tok_str_loop
+
+@tok_str_quote:
+    inc SCR_PTR
+    bne @tok_str_close
+    inc SCR_PTR+1
+
+@tok_str_close:
+    ldy #0
+    lda #TOK_STRING
+    sta (SCR_PTR2), y
+    inc SCR_PTR2
+    bne :+
+    inc SCR_PTR2+1
+:
+    jmp @tok_loop
+
 @tok_check_number:
     ldy #0
     lda (SCR_PTR), y
     cmp #'0'
-    bcc @tok_fallback
+    bcc @tok_check_relop
     cmp #'9'+1
-    bcs @tok_fallback
+    bcs @tok_check_relop
 
     jsr PARSE_NUMBER
+    jmp @tok_loop
+
+@tok_check_relop:
+    ldy #0
+    lda (SCR_PTR), y
+    cmp #'<'
+    beq @tok_relop_lt
+    cmp #'>'
+    beq @tok_relop_gt
+    jmp @tok_check_variable
+
+@tok_relop_lt:
+    ldy #1
+    lda (SCR_PTR), y
+    cmp #'>'
+    beq @tok_relop_neq
+    cmp #'='
+    beq @tok_relop_lte
+    jmp @tok_fallback
+
+@tok_relop_neq:
+    lda #2
+    clc
+    adc SCR_PTR
+    sta SCR_PTR
+    bcc :+
+    inc SCR_PTR+1
+:
+    ldy #0
+    lda #TOK_NEQ
+    sta (SCR_PTR2), y
+    inc SCR_PTR2
+    bne :+
+    inc SCR_PTR2+1
+:
+    jmp @tok_loop
+
+@tok_relop_lte:
+    lda #2
+    clc
+    adc SCR_PTR
+    sta SCR_PTR
+    bcc :+
+    inc SCR_PTR+1
+:
+    ldy #0
+    lda #TOK_LTE
+    sta (SCR_PTR2), y
+    inc SCR_PTR2
+    bne :+
+    inc SCR_PTR2+1
+:
+    jmp @tok_loop
+
+@tok_relop_gt:
+    ldy #1
+    lda (SCR_PTR), y
+    cmp #'='
+    beq @tok_relop_gte
+    jmp @tok_fallback
+
+@tok_relop_gte:
+    lda #2
+    clc
+    adc SCR_PTR
+    sta SCR_PTR
+    bcc :+
+    inc SCR_PTR+1
+:
+    ldy #0
+    lda #TOK_GTE
+    sta (SCR_PTR2), y
+    inc SCR_PTR2
+    bne :+
+    inc SCR_PTR2+1
+:
+    jmp @tok_loop
+
+@tok_check_variable:
+    ldy #0
+    lda (SCR_PTR), y
+    cmp #'A'
+    bcc @tok_fallback
+    cmp #'Z'+1
+    bcs @tok_fallback
+
+    sec
+    sbc #'A'
+    clc
+    adc #TOK_VAR_BASE
+    sta (SCR_PTR2), y
+    inc SCR_PTR2
+    bne :+
+    inc SCR_PTR2+1
+:
+    inc SCR_PTR
+    bne :+
+    inc SCR_PTR+1
+:
     jmp @tok_loop
 
 @tok_fallback:
@@ -92,8 +247,9 @@ TOKENIZE:
     inc SCR_PTR2+1
 :
     inc SCR_PTR
-    bne @tok_loop
+    bne :+
     inc SCR_PTR+1
+:
     jmp @tok_loop
 
 @tok_end:
@@ -325,4 +481,3 @@ PARSE_NUMBER:
     tax
     pla
     rts
-
