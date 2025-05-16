@@ -4,7 +4,7 @@
 
 .segment "CODE"
 
-.export TOKENIZE, MATCH_KEYWORD, TRY_MATCH_KEYWORD
+.export TOKENIZE, MATCH_KEYWORD, TRY_MATCH_KEYWORD, PARSE_NUMBER
 
 TOKENIZE:
     pha
@@ -41,7 +41,7 @@ TOKENIZE:
 @tok_check_keyword:
     jsr TRY_MATCH_KEYWORD
     cmp #0
-    beq @tok_fallback
+    beq @tok_check_number
 
     ; Keyword matched! Token in A
     tax
@@ -70,6 +70,17 @@ TOKENIZE:
     bne @tok_rem_copy
     inc SCR_PTR2+1
     jmp @tok_rem_copy
+
+@tok_check_number:
+    ldy #0
+    lda (SCR_PTR), y
+    cmp #'0'
+    bcc @tok_fallback
+    cmp #'9'+1
+    bcs @tok_fallback
+
+    jsr PARSE_NUMBER
+    jmp @tok_loop
 
 @tok_fallback:
     ; Default: emit character directly to token buffer
@@ -222,3 +233,96 @@ KEYWORD_TABLE:
     .byte TOK_RND,   "RND", 0
     .byte TOK_ABS,   "ABS", 0
     .byte 0
+
+PARSE_NUMBER:
+    pha
+    txa
+    pha
+    tya
+    pha
+
+    ; 1. Emit TOK_NUMBER ($C0)
+    ldy #0
+    lda #TOK_NUMBER
+    sta (SCR_PTR2), y
+    inc SCR_PTR2
+    bne :+
+    inc SCR_PTR2+1
+:
+    ; 2. Initialize 16-bit accumulator SCR_NUM = 0
+    lda #0
+    sta SCR_NUM
+    sta SCR_NUM+1
+
+@pn_loop:
+    ldy #0
+    lda (SCR_PTR), y
+    cmp #'0'
+    bcc @pn_done
+    cmp #'9'+1
+    bcs @pn_done
+
+    sec
+    sbc #'0'
+    sta SCR_WORK_3     ; digit
+
+    ; SCR_TMP = SCR_NUM * 2
+    lda SCR_NUM
+    asl a
+    sta SCR_TMP
+    lda SCR_NUM+1
+    rol a
+    sta SCR_TMP+1
+
+    ; SCR_NUM = SCR_NUM * 8
+    asl SCR_NUM
+    rol SCR_NUM+1
+    asl SCR_NUM
+    rol SCR_NUM+1
+    asl SCR_NUM
+    rol SCR_NUM+1
+
+    ; SCR_NUM = (SCR_NUM * 8) + (SCR_TMP * 2) = * 10
+    clc
+    lda SCR_NUM
+    adc SCR_TMP
+    sta SCR_NUM
+    lda SCR_NUM+1
+    adc SCR_TMP+1
+    sta SCR_NUM+1
+
+    ; SCR_NUM = SCR_NUM + digit
+    clc
+    lda SCR_NUM
+    adc SCR_WORK_3
+    sta SCR_NUM
+    bcc :+
+    inc SCR_NUM+1
+:
+    inc SCR_PTR
+    bne @pn_loop
+    inc SCR_PTR+1
+    jmp @pn_loop
+
+@pn_done:
+    ; 3. Emit 16-bit word in little-endian order (<lo> <hi>)
+    ldy #0
+    lda SCR_NUM
+    sta (SCR_PTR2), y
+    inc SCR_PTR2
+    bne :+
+    inc SCR_PTR2+1
+:
+    lda SCR_NUM+1
+    sta (SCR_PTR2), y
+    inc SCR_PTR2
+    bne :+
+    inc SCR_PTR2+1
+:
+    pla
+    tay
+    pla
+    tax
+    pla
+    rts
+
