@@ -1,5 +1,5 @@
 ; ============================================================================
-; PBasic m6502 - Program Memory Initialization
+; PBasic m6502 - Program Memory Management & Allocation
 ; ============================================================================
 
 .segment "CODE"
