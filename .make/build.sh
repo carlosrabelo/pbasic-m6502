@@ -24,7 +24,9 @@ FILES=(
     src/cmd_run.s
     src/cmd_let.s
     src/cmd_goto.s
+    src/cmd_gosub.s
     src/cmd_print.s
+    src/cmd_return.s
     src/cmd_end.s
     src/cmd_new.s
     src/cmd_exit.s
