@@ -23,6 +23,7 @@ FILES=(
     src/cmd_list.s
     src/cmd_run.s
     src/cmd_let.s
+    src/cmd_goto.s
     src/cmd_print.s
     src/cmd_end.s
     src/cmd_new.s
