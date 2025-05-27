@@ -18,7 +18,58 @@ fi
 
 echo "Source tracking check passed."
 
-# 2. Check build
+# 2. Public symbol verification
+MANDATORY_SYMBOLS=(
+    main
+    INCHAR
+    OUTCHAR
+    READ_LINE
+    PRINT_STR
+    PRINT_TOKENS
+    PROG_INIT
+    LINE_FIND
+    LINE_STORE
+    MEM_OPEN_HOLE
+    MEM_CLOSE_HOLE
+    MEM_PROG_LIMIT
+    VAR_INIT
+    VAR_GET
+    VAR_SET
+    MUL16
+    DIV16
+    MOD16
+    TOKENIZE
+    MATCH_KEYWORD
+    EVAL_EXPR
+    EVAL_FACTOR
+    EVAL_TERM
+    EVAL_COND
+    REPL_DISPATCH
+    DO_PRINT
+    DO_LET
+    DO_NEW
+    DO_REM
+    DO_FREE
+    DO_RUN
+    DO_END
+    DO_EXIT
+    DO_GOTO
+    DO_GOSUB
+    DO_RETURN
+    DO_IF
+    DO_INPUT
+)
+
+for sym in "${MANDATORY_SYMBOLS[@]}"; do
+    if ! grep -Eq "^[[:space:]]*${sym}[:[:space:]=]" src/*.s src/*.inc; then
+        echo "Error: Mandatory symbol '$sym' not found in src/" >&2
+        exit 1
+    fi
+done
+
+echo "Public symbol verification passed (${#MANDATORY_SYMBOLS[@]} symbols checked)."
+
+# 3. Check build
 ./.make/build.sh
 echo "Build succeeded."
 
