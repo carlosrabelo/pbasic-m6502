@@ -75,4 +75,9 @@ DO_LIST:
     pla
     tax
     pla
-    rts
+    lda MEM_RUN_FLAG
+    bne @list_run_next
+    jmp REPL
+
+@list_run_next:
+    jmp RUN_NEXT
