@@ -10,6 +10,7 @@
 ; 16-bit Linear Congruential Generator (LCG):
 ; seed = (seed * 25173 + 13849) mod 65536
 ; Output: SCR_ACC = new 16-bit pseudo-random word (0..65535)
+; Preserves: X, Y
 RAND16:
     pha
 
