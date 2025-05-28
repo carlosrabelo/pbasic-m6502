@@ -88,16 +88,19 @@ DO_INPUT:
     jmp @di_skip_spaces
 
 @di_check_sign:
-    lda #0               ; 0 = positive
     ldy #0
     lda (SCR_PTR), y
     cmp #'-'
-    bne @di_parse_init
-    lda #1               ; 1 = negative
+    bne @di_not_neg
     inc SCR_PTR
     bne :+
     inc SCR_PTR+1
 :
+    lda #1               ; 1 = negative
+    jmp @di_parse_init
+
+@di_not_neg:
+    lda #0               ; 0 = positive
 
 @di_parse_init:
     pha                  ; stack: [var_token, sign_flag]

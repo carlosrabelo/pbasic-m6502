@@ -146,9 +146,9 @@ EVAL_FACTOR:
 
 @ef_rnd_nonzero:
     lda SCR_ACC_0
-    sta SCR_TMP
+    pha
     lda SCR_ACC_1
-    sta SCR_TMP+1
+    pha
 
     jsr RAND16
 
@@ -156,6 +156,11 @@ EVAL_FACTOR:
     sta SCR_NUM
     lda SCR_ACC_1
     sta SCR_NUM+1
+
+    pla
+    sta SCR_TMP+1
+    pla
+    sta SCR_TMP
 
     jsr MOD16
 
